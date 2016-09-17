@@ -102,7 +102,7 @@ Module.register('MMM-VBB', {
 
 				var dir = current.$.direction;
 				var name = current.$.name;
-				var timeMoment = moment(current.$.rtDate + " " + current.$.rtTime, "YYYY-MM-DD HH:mm:ss");
+				var timeMoment = moment((current.$.rtDate || current.$.date) + " " + (current.$.rtTime || current.$.time), "YYYY-MM-DD HH:mm:ss");
 				var time = timeMoment.fromNow();
 				if (this.config.abbreviateNow && Math.abs(moment().diff(moment(timeMoment))) <= 45000)
 				{
