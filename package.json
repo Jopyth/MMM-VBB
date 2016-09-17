@@ -1,0 +1,27 @@
+{
+  "name": "Magic-Mirror-Module-VBB",
+  "version": "0.1.0",
+  "description": "A module for displaying VBB departures from a given station.",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jopyth/MMM-VBB"
+  },
+  "keywords": [
+    "magic mirror",
+    "smart mirror",
+    "vbb",
+    "berlin",
+    "brandenburg",
+    "module"
+  ],
+  "author": "Joseph Bethge",
+  "contributors": "git+https://github.com/jopyth/MMM-VBB/graphs/contributors",
+  "license": "MIT",
+  "bugs": {
+    "url": "git+https://github.com/jopyth/MMM-VBB/issues"
+  },
+  "homepage": "git+https://github.com/jopyth/MMM-VBB#readme",
+  "dependencies": {
+    "xml2js": "latest"
+  }
+}
