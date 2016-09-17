@@ -33,11 +33,11 @@ Module.register('MMM-VBB', {
 
 		var self = this;
 		
-		setInterval(function() {
+		this.addAutoSuspendingInterval(function() {
 			self.updateTime();
 		}, 1000 * 20);
 
-		setInterval(function() {
+		this.addAutoSuspendingInterval(function() {
 			self.updateData();
 		}, this.config.updateInterval);
 
@@ -50,6 +50,10 @@ Module.register('MMM-VBB', {
 
 	getScripts: function() {
 		return ["moment.js"];
+	},
+
+	notificationReceived: function(notification, payload, sender) {
+		this.checkUserPresence(notification, payload, sender);
 	},
 
 	updateData: function() {
