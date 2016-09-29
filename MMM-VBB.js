@@ -13,9 +13,10 @@ Module.register('MMM-VBB', {
 		stationId: "",
 		apiKey: "",
 		abbreviateNow: true,
-		maxTimeDistance: true,
 		systemURL: "http://demo.hafas.de/openapi/vbb-proxy",
-		service: "/departureBoard"
+		service: "/departureBoard",
+		fade: true,
+		fadePoint: 0.5 // Start on half of the list.
 	},
 	start: function() {
 		Log.info('Starting module: ' + this.name);
@@ -92,12 +93,17 @@ Module.register('MMM-VBB', {
 	},
 	getDom: function() {
 		var wrapper = document.createElement("div");
-		wrapper.className = 'vbb-wrapper';
+		wrapper.className = 'vbb-wrapper small';
 		if (!this.loaded) {
 			wrapper.innerHTML = "<span class='small fa fa-refresh fa-spin fa-fw'></span>";
 		} else {
-			for (var i = 0; i < Math.min(this.board.Departure.length, this.config.maxDepartures); i++)
+			var length = Math.min(this.board.Departure.length, this.config.maxDepartures);
+
+			for (var i = 0; i < length; i++)
 			{
+				var entryDiv = document.createElement("div");
+				entryDiv.className = "vbb-entry";
+
 				var current = this.board.Departure[i];
 
 				var dir = current.$.direction;
@@ -111,13 +117,29 @@ Module.register('MMM-VBB', {
 
 				var productDiv = document.createElement("div");
 				productDiv.innerHTML = name + " (" + dir + ")";
-				productDiv.className = "vbb-product bright small";
-				wrapper.appendChild(productDiv);
+				productDiv.className = "vbb-product bright";
+				entryDiv.appendChild(productDiv);
 
 				var timeDiv = document.createElement("div");
 				timeDiv.innerHTML = time;
-				timeDiv.className = "vbb-time small light";
-				wrapper.appendChild(timeDiv);
+				timeDiv.className = "vbb-time light normal";
+				entryDiv.appendChild(timeDiv);
+
+				// Create fade effect by MichMich (MIT)
+				if (this.config.fade && this.config.fadePoint < 1) {
+					if (this.config.fadePoint < 0) {
+						this.config.fadePoint = 0;
+					}
+					var startingPoint = length * this.config.fadePoint;
+					var steps = length - startingPoint;
+					if (i >= startingPoint) {
+						var currentStep = i - startingPoint;
+						entryDiv.style.opacity = 1 - (1 / steps * currentStep);
+					}
+				}
+				// End Create fade effect by MichMich (MIT)
+
+				wrapper.appendChild(entryDiv);
 			}
 		}
 		return wrapper;
