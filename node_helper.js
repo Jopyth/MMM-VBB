@@ -14,8 +14,9 @@ module.exports = NodeHelper.create({
 		console.log(this.name + ' helper started ...');
 	},
 
-	onError: function (message) {
+	onError: function (message, origin) {
 		console.log(message);
+		this.sendSocketNotification('ERROR', {message: message, origin: origin});
 	},
 
 	socketNotificationReceived: function(notification, payload) {
@@ -25,19 +26,19 @@ module.exports = NodeHelper.create({
 			request({url: payload.url, method: 'GET'}, function(error, response, body) {
 				if (error)
 				{
-					self.onError(error);
+					self.onError(error, payload.origin);
 					return;
 				}
 
 				if (response.statusCode !== 200)
 				{
-					self.onError(response.statusCode);
+					self.onError("Error " + response.statusCode + " (" + response.statusMessage + ")", payload.origin);
 					return;
 				}
 
 				xml2js.parseString(body, function (err, result) {
 					if (err) {
-						self.onError(err);
+						self.onError(err, payload.origin);
 						return;
 					}
 					self.sendSocketNotification('RESPONSE', {

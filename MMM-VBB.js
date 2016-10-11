@@ -21,6 +21,7 @@ Module.register('MMM-VBB', {
 	start: function() {
 		Log.info('Starting module: ' + this.name);
 		this.loaded = false;
+		this.error = false;
 
 		this.url = this.config.systemURL + this.config.service + "?";
 		this.url += "id=" + this.config.stationId;
@@ -67,8 +68,15 @@ Module.register('MMM-VBB', {
 	},
 
 	socketNotificationReceived: function(notification, payload) {
+		if (notification === 'ERROR' && payload.origin === this.identifier)
+		{
+			this.error = true;
+			this.errorMessage = payload.message;
+			this.updateDom(this.config.animationSpeed);
+		}
 		if (notification === 'RESPONSE' && payload.origin === this.identifier)
 		{
+			console.log(payload.data);
 			if (payload.data && payload.data.DepartureBoard)
 			{
 				this.board = payload.data.DepartureBoard;
@@ -78,69 +86,86 @@ Module.register('MMM-VBB', {
 			}
 		}
 	},
+
 	getTranslations: function() {
 		return {
 			de: "translations/de.json",
 			en: "translations/en.json"
 		};
 	},
-	getHeaderAppendix: function() {
+
+	getHeader: function() {
 		if (!this.updated)
 		{
-			return "";
+			return this.data.header;
 		}
-		return " (<span class='fa fa-refresh'></span> " + this.updated.format("HH:mm:ss") + ")";
+		return this.data.header + " (<span class='fa fa-refresh'></span> " + this.updated.format("HH:mm:ss") + ")";
 	},
+
 	getDom: function() {
 		var wrapper = document.createElement("div");
 		wrapper.className = 'vbb-wrapper small';
+		
+		if (this.error) {
+			wrapper.innerHTML = "<span class='small fa fa-exclamation-triangle'></span> " + this.errorMessage;
+			wrapper.className = "small dimmed";
+			return wrapper;
+		}
+
 		if (!this.loaded) {
 			wrapper.innerHTML = "<span class='small fa fa-refresh fa-spin fa-fw'></span>";
-		} else {
-			var length = Math.min(this.board.Departure.length, this.config.maxDepartures);
+			return wrapper;
+		}
 
-			for (var i = 0; i < length; i++)
+		if (!this.board.Departure || Math.min(this.board.Departure.length, this.config.maxDepartures) === 0) {
+			wrapper.innerHTML = this.translate('NO_CONNECTIONS');
+			wrapper.className = "small dimmed";
+			return wrapper;
+		}
+
+		var length = Math.min(this.board.Departure.length, this.config.maxDepartures);
+
+		for (var i = 0; i < length; i++)
+		{
+			var entryDiv = document.createElement("div");
+			entryDiv.className = "vbb-entry";
+
+			var current = this.board.Departure[i];
+
+			var dir = current.$.direction;
+			var name = current.$.name;
+			var timeMoment = moment((current.$.rtDate || current.$.date) + " " + (current.$.rtTime || current.$.time), "YYYY-MM-DD HH:mm:ss");
+			var time = timeMoment.fromNow();
+			if (this.config.abbreviateNow && Math.abs(moment().diff(moment(timeMoment))) <= 45000)
 			{
-				var entryDiv = document.createElement("div");
-				entryDiv.className = "vbb-entry";
-
-				var current = this.board.Departure[i];
-
-				var dir = current.$.direction;
-				var name = current.$.name;
-				var timeMoment = moment((current.$.rtDate || current.$.date) + " " + (current.$.rtTime || current.$.time), "YYYY-MM-DD HH:mm:ss");
-				var time = timeMoment.fromNow();
-				if (this.config.abbreviateNow && Math.abs(moment().diff(moment(timeMoment))) <= 45000)
-				{
-					time = this.translate('NOW');
-				}
-
-				var productDiv = document.createElement("div");
-				productDiv.innerHTML = name + " (" + dir + ")";
-				productDiv.className = "vbb-product bright";
-				entryDiv.appendChild(productDiv);
-
-				var timeDiv = document.createElement("div");
-				timeDiv.innerHTML = time;
-				timeDiv.className = "vbb-time light normal";
-				entryDiv.appendChild(timeDiv);
-
-				// Create fade effect by MichMich (MIT)
-				if (this.config.fade && this.config.fadePoint < 1) {
-					if (this.config.fadePoint < 0) {
-						this.config.fadePoint = 0;
-					}
-					var startingPoint = length * this.config.fadePoint;
-					var steps = length - startingPoint;
-					if (i >= startingPoint) {
-						var currentStep = i - startingPoint;
-						entryDiv.style.opacity = 1 - (1 / steps * currentStep);
-					}
-				}
-				// End Create fade effect by MichMich (MIT)
-
-				wrapper.appendChild(entryDiv);
+				time = this.translate('NOW');
 			}
+
+			var productDiv = document.createElement("div");
+			productDiv.innerHTML = name + " (" + dir + ")";
+			productDiv.className = "vbb-product bright";
+			entryDiv.appendChild(productDiv);
+
+			var timeDiv = document.createElement("div");
+			timeDiv.innerHTML = time;
+			timeDiv.className = "vbb-time light normal";
+			entryDiv.appendChild(timeDiv);
+
+			// Create fade effect by MichMich (MIT)
+			if (this.config.fade && this.config.fadePoint < 1) {
+				if (this.config.fadePoint < 0) {
+					this.config.fadePoint = 0;
+				}
+				var startingPoint = length * this.config.fadePoint;
+				var steps = length - startingPoint;
+				if (i >= startingPoint) {
+					var currentStep = i - startingPoint;
+					entryDiv.style.opacity = 1 - (1 / steps * currentStep);
+				}
+			}
+			// End Create fade effect by MichMich (MIT)
+
+			wrapper.appendChild(entryDiv);
 		}
 		return wrapper;
 	}

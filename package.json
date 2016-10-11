@@ -1,6 +1,6 @@
 {
   "name": "Magic-Mirror-Module-VBB",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "description": "A module for displaying VBB departures from a given station.",
   "repository": {
     "type": "git",
