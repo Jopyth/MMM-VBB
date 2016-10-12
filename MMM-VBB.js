@@ -76,7 +76,6 @@ Module.register('MMM-VBB', {
 		}
 		if (notification === 'RESPONSE' && payload.origin === this.identifier)
 		{
-			console.log(payload.data);
 			if (payload.data && payload.data.DepartureBoard)
 			{
 				this.board = payload.data.DepartureBoard;
@@ -89,8 +88,8 @@ Module.register('MMM-VBB', {
 
 	getTranslations: function() {
 		return {
-			de: "translations/de.json",
-			en: "translations/en.json"
+			en: "translations/en.json",
+			de: "translations/de.json"
 		};
 	},
 
@@ -100,6 +99,72 @@ Module.register('MMM-VBB', {
 			return this.data.header;
 		}
 		return this.data.header + " (<span class='fa fa-refresh'></span> " + this.updated.format("HH:mm:ss") + ")";
+	},
+
+	// contains auto suspending autoIntervals
+	autoIntervals: [],
+
+	/* checkUserPresence(notification, payload, sender)
+	 * Use this method to conveniently suspend your module when no user is present.
+	 */
+	checkUserPresence: function(notification, payload, sender) {
+		if (sender && notification === "USER_PRESENCE") {
+			if (payload === true)
+			{
+				this.resumeIntervals();
+			}
+			else
+			{
+				this.suspendIntervals();
+			}
+		}
+	},
+
+	/* addAutoSuspendingInterval(callback, time)
+	 * Use instead of setInterval for automatic pause when on suspend.
+	 * The callback is executed immediately once after the user returns.
+	 */
+	addAutoSuspendingInterval: function(callback, time) {
+		var newInterval = setInterval(callback, time);
+		this.autoIntervals.push({
+			callback: callback,
+			interval: newInterval,
+			time: time
+		});
+	},
+
+	/* suspendIntervals()
+	 * This method is called when a module is hidden.
+	 */
+	suspendIntervals: function() {
+		for (var i = 0; i < this.autoIntervals.length; i++)
+		{
+			var current = this.autoIntervals[i];
+
+			if (current.interval)
+			{
+				clearInterval(current.interval);
+
+				current.interval = null;
+			}
+		}
+	},
+
+	/* resumeIntervals()
+	 * This method is called when a module is shown.
+	 */
+	resumeIntervals: function() {
+		for (var i = 0; i < this.autoIntervals.length; i++)
+		{
+			var current = this.autoIntervals[i];
+
+			if (!current.interval)
+			{
+				current.callback();
+
+				current.interval = setInterval(current.callback, current.time);
+			}
+		}
 	},
 
 	getDom: function() {
