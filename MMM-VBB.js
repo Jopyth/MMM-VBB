@@ -207,7 +207,7 @@ Module.register('MMM-VBB', {
 			}
 
 			var productDiv = document.createElement("div");
-			productDiv.innerHTML = name + " (" + dir + ")";
+			productDiv.innerHTML = name + " <span class='xsmall'>(" + dir + ")</span>";
 			productDiv.className = "vbb-product bright";
 			entryDiv.appendChild(productDiv);
 
